@@ -23,4 +23,6 @@ public class ObjectiveService {
     public List<Objective> findObjectivesByUser(Long userId) {
         return objectiveRepository.findByUserId(userId);
     }
+
+
 }

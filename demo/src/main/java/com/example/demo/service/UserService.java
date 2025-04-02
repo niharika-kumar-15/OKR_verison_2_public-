@@ -75,7 +75,7 @@ public class UserService {
 
     private String findManagerNameByUserId(Long managerId) {
         // Find the manager by their user ID
-        User manager = userRepository.findByUserId(managerId);
+        User manager = userRepository.findUserById(managerId);
         return manager != null ? manager.getUsername() : "Unknown Manager";
     }
 
@@ -99,7 +99,7 @@ public class UserService {
 
 
     public User getUserById(Long userId) {
-        return  userRepository.findByUserId(userId);
+        return  userRepository.findUserById(userId);
     }
 
     @Transactional(readOnly = true)

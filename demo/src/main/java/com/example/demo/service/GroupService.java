@@ -71,11 +71,9 @@ public class GroupService {
        List<UserGroupJoin> allUserGroupJoin =userGroupJoinRepository.findByGroupId(groupId);
        List<User> members = new ArrayList<>();
        for(int i = 0; i < allUserGroupJoin.size(); i++) {
-           User member = userRepository.findByUserId(allUserGroupJoin.get(i).getUserId());
+           User member = userRepository.findUserById(allUserGroupJoin.get(i).getUserId());
            members.add(member);
         }
        return  members;
     }
-
-
 }
