@@ -2,19 +2,28 @@ package com.example.demo.model;
 
 import com.example.demo.enums.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
+import lombok.Setter;
+import lombok.Getter;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @Entity
 @Table(name = "users")
-public class User {
-
+@Getter
+@Setter
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(name = "username", nullable = false)
@@ -23,7 +32,6 @@ public class User {
     @Column(name = "group_id")
     private Long groupId;
 
-    // Many-to-Many relationship with Objective
     @ManyToMany
     @JoinTable(
             name = "user_objective",
@@ -39,99 +47,63 @@ public class User {
     @Column(name = "designation")
     private String designation;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JsonManagedReference // This ensures the userRoles are serialized correctly and prevents recursion
+    private Set<UserRole> userRoles = new HashSet<>();
 
-    @Column(name = "role")
-    private String role;
-
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
+
+    private String password;
 
     public User() {
     }
 
-    // Modify the constructor to accept String and convert it to Role
-    public User(String username, String designation , long managerId , String email ) {
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserVerification userVerification;
+
+    // Constructor without roles
+    public User(String username, String designation, long managerId, String email) {
         this.username = username;
         this.managerId = managerId;
         this.designation = designation;
         this.email = email;
     }
 
-    // Getters and Setters
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public Long getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(Long groupId) {
-        this.groupId = groupId;
-    }
-
-    public List<Objective> getObjectives() {
-        return objectives;
-    }
-
-    public void setObjectives(List<Objective> objectives) {
-        this.objectives = objectives;
-    }
-
-    public Long getManagerId() {
-        return managerId;
-    }
-
-    public void setManagerId(Long managerId) {
-        this.managerId = managerId;
-    }
-
-    public String getDesignation() {
-        return designation;
-    }
-
-    public void setDesignation(String designation) {
-        this.designation = designation;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    // Add role dynamically using Role enum
+    public void addRole(Role role) {
+        this.userRoles.add(new UserRole(this, role));
     }
 
     @Override
-    public String toString() {
-        return "User{" +
-                "userId=" + userId +
-                ", username='" + username + '\'' +
-                ", groupId=" + groupId +
-                ", managerId=" + managerId +
-                ", designation='" + designation + '\'' +
-                ", role=" + role +
-                ", email='" + email + '\'' +
-                '}';
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        for (UserRole userRole : this.getUserRoles()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + userRole.getRole().name()));
+        }
+        return authorities;
+    }
+
+    // Get all roles as a Set of Strings
+    public Set<String> getRoles() {
+        Set<String> roles = new HashSet<>();
+        for (UserRole userRole : userRoles) {
+            roles.add(userRole.getRole().name()); // Using name() to get enum string
+        }
+        return roles;
+    }
+
+    // Updated setRoles method using Role enum
+    public void setRoles(Set<Role> roles) {
+        this.userRoles.clear();
+        for (Role role : roles) {
+            this.userRoles.add(new UserRole(this, role));
+        }
+    }
+
+    public void setRoles(Role role) {
+        Set<Role> roles = new HashSet<>();
+        roles.add(role);
+        setRoles(roles);
     }
 }

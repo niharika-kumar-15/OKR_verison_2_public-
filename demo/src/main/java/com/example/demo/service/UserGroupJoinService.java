@@ -47,7 +47,6 @@ public class UserGroupJoinService {
                 .filter(join -> join.getGroupId() == groupId)
                 .toList();
     }
-
     // Get all group IDs by user ID
     public List<UserGroupJoin> getUserGroupJoinsByUserId(Long userId) {
         return userGroupJoinRepository.findAll().stream()

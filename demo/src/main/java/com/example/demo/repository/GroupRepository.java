@@ -7,7 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
-
     // JpaRepository provides all CRUD methods out-of-the-box
-
 }
